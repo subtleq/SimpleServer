@@ -32,6 +32,7 @@ enum ROLE { CLIENT, SERVER };
  */
 class Socket
 {
+public:
   /**
    * Socket constructor.
    * @param _protocol the protocol type to be used by this socket
@@ -132,5 +133,7 @@ class Socket
    * @return 0 on success, -1 on error
    */
   int restart_socket(int millisecond_timeout = 200);
+private:
+  int socket_descriptor; // file descriptor for this socket object.
 };
 }
