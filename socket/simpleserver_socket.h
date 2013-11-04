@@ -1,3 +1,6 @@
+#include <string>
+using std::string;
+
 /**
  * A simple socket interface to allow easier access to socket communcation
  */
