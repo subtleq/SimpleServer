@@ -1,3 +1,5 @@
+#ifndef SIMPLESERVER_SOCKET_H
+#define SIMPLESERVER_SOCKET_H
 #include <string>
 using std::string;
 
@@ -140,3 +142,4 @@ private:
   int socket_descriptor; // file descriptor for this socket object.
 };
 }
+#endif // #ifndef SIMPLESERVVER_SOCKET_H
