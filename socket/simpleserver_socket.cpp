@@ -10,7 +10,8 @@ using namespace simpleserver;
  * @param _address the address for this socket to use.  Note: if a CLIENT,
  *   the address for the SERVER to connect to.
  */
-Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) {
+Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) :
+    socket_descriptor(-1) {
 
 }
 
@@ -18,7 +19,7 @@ Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) {
  * Socket destructor.  Calls stop_socket() and frees any internal resources.
  */
 Socket::~Socket() {
-
+  stop_socket();
 }
 
 /**
@@ -31,7 +32,16 @@ Socket::~Socket() {
  * @return number of bytes actually sent on success, -1 on error
  */
 int Socket::send_data(void* data, int size, int millisecond_timeout) {
-  return 0;
+  // if this socket is not setup correctly or stopped, return error
+  if (socket_descriptor == -1)
+    return -1;
+
+  int ans = 0, cur = 0, send_cnt = 0;
+  // while we send some amount of data and we have not sent everything in the buffer
+  do {
+    cur = send(socket_descriptor, (void*) (((long long int) data) + send_cnt), size - send_cnt, 0);
+  } while (cur > 0 && ((send_cnt += cur)  < size));
+  return send_cnt;
 }
 
 /**
@@ -72,7 +82,16 @@ int Socket::send_long(long l, int millisecond_timeout) {
  * @param return number of bytes actually received on success, -1 on error
  */
 int Socket::recv_data(void* data, int size, int millisecond_timeout) {
-  return 0;
+  // if this socket is not setup correctly or stopped, return error
+  if (socket_descriptor == -1)
+    return -1;
+
+  int ans = 0, cur = 0, recv_cnt = 0;
+  // while we receive some amount of data and we have not filled the buffer
+  do {
+    cur = recv(socket_descriptor, (void*) (((long long int) data) + recv_cnt), size - recv_cnt, 0);
+  } while (cur > 0 && ((recv_cnt += cur)  < size));
+  return recv_cnt;
 }
 
 /**
@@ -114,6 +133,9 @@ int Socket::recv_long(long *l, int millisecond_timeout) {
  * @return 0 on success, -1 on error
  */
 int Socket::stop_socket(int millisecond_timeout) {
+  if (socket_descriptor == -1)
+    return -1;
+  close(socket_descriptor);
   return 0;
 }
 
@@ -129,4 +151,3 @@ int Socket::stop_socket(int millisecond_timeout) {
 int Socket::restart_socket(int millisecond_timeout) {
   return 0;
 }
-

@@ -3,6 +3,10 @@
 #include <string>
 using std::string;
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 /**
  * A simple socket interface to allow easier access to socket communcation
  */
