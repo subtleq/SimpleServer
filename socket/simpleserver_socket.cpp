@@ -100,7 +100,7 @@ int Socket::recv_short(short *s, int millisecond_timeout) {
  * @return 0 on success, -1 on failure
  */
 int Socket::recv_long(long *l, int millisecond_timeout) {
-  int ans = rec_data(l, sizeof(long), millisecond_timeout);
+  int ans = recv_data(l, sizeof(long), millisecond_timeout);
   *l = ntohl(*l);
   return ans;
 }
