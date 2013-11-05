@@ -1,6 +1,8 @@
 #include "simpleserver_socket.h"
 using namespace simpleserver;
 
+#include <netinet/in.h>
+
 /**
  * Socket constructor.
  * @param _protocol the protocol type to be used by this socket
@@ -42,7 +44,8 @@ int Socket::send_data(void* data, int size, int millisecond_timeout) {
  * @return 0 on success, -1 on failure
  */
 int Socket::send_short(short s, int millisecond_timeout) {
-  return 0;
+  s = htons(s);
+  return send_data(&s, sizeof(short), millisecond_timeout);
 }
 
 /**
@@ -55,7 +58,8 @@ int Socket::send_short(short s, int millisecond_timeout) {
  * @return 0 on success, -1 on failure
  */
 int Socket::send_long(long l, int millisecond_timeout) {
-  return 0;
+  l = htonl(l);
+  return send_data(&l, sizeof(long), millisecond_timeout);
 }
 
 /**
@@ -81,7 +85,9 @@ int Socket::recv_data(void* data, int size, int millisecond_timeout) {
  * @return 0 on success, -1 on failure
  */
 int Socket::recv_short(short *s, int millisecond_timeout) {
-  return 0;
+  int ans = recv_data(s, sizeof(short), millisecond_timeout);
+  *s = ntohs(*s);
+  return ans;
 }
 
 /**
@@ -94,7 +100,9 @@ int Socket::recv_short(short *s, int millisecond_timeout) {
  * @return 0 on success, -1 on failure
  */
 int Socket::recv_long(long *l, int millisecond_timeout) {
-  return 0;
+  int ans = rec_data(l, sizeof(long), millisecond_timeout);
+  *l = ntohl(*l);
+  return ans;
 }
 
 /**
