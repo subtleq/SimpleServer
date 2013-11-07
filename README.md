@@ -8,19 +8,29 @@ The types of servers that are being considered for development are as follows
 -
 
 Simple Web Server (http://en.wikipedia.org/wiki/Web_server)
+
 a simple web server used to present a web site.
 
+
 Simple Mail Server (http://en.wikipedia.org/wiki/Mail_server)
+
 a simple mail server used to serve email.
 
+
 Simple File Server (http://en.wikipedia.org/wiki/File_server)
+
 a simple file server to allow remote access of files.
 
+
 Simple Proxy Server (http://en.wikipedia.org/wiki/Proxy_server)
+
 a simple proxy server to allow tunneling.
 
+
 Simple Name Server (http://en.wikipedia.org/wiki/Name_server)
+
 a simple name server to handle DNS lookup requests.
+
 
 -
 
