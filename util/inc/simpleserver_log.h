@@ -55,42 +55,7 @@ class Log {
       // create a va_list of the trailing variables and log the message
       va_list args;
       va_start(args, msg);
-      Log::get_instance().log(type, source, line,msg, args);
-      va_end(args);
-    }
 
-  private:
-    char log_string[LOG_STRING_SIZE]; // string used to generate log message.
-    bool bools[TYPE_SIZE]; // Boolean array storing state of Log types.
-
-    /**
-     * Constructor, set alllogging to on.
-     */
-    Log() {
-      for (int i = 0; i < TYPE_SIZE; i++)
-        bools[i] = true;
-    }
-
-    /**
-     * Get the singleton instance of the Log object.
-     *
-     * @return a pointer to the singleton instance of the Log object
-     */
-    static Log& get_instance() {
-      static Log instance;
-      return instance;
-    }
-
-    /**
-     * Log a message of a given type.
-     *
-     * @param type the type of message to log
-     * @param *source the source file it occurred in
-     * @param line the line number it occurred on
-     * @param *msg a printf style string
-     * @param args any trailing variables for vsprintf to use
-     */
-    void log(TYPE type, const char *source, int line, const char *msg, va_list args) {
       // create a string for the message type
       char type_string[16];
       switch(type) {
@@ -129,8 +94,31 @@ class Log {
       vsprintf(log_string + strlen(log_string), msg, args);
       strcpy(log_string + strlen(log_string), "\n");
 
-      // log the generated message
+      // log the generated message and free the va_list
       fprintf(stdout, "%s", log_string);
+      va_end(args);
+    }
+
+  private:
+    char log_string[LOG_STRING_SIZE]; // string used to generate log message.
+    bool bools[TYPE_SIZE]; // Boolean array storing state of Log types.
+
+    /**
+     * Constructor, set alllogging to on.
+     */
+    Log() {
+      for (int i = 0; i < TYPE_SIZE; i++)
+        bools[i] = true;
+    }
+
+    /**
+     * Get the singleton instance of the Log object.
+     *
+     * @return a pointer to the singleton instance of the Log object
+     */
+    static Log& get_instance() {
+      static Log instance;
+      return instance;
     }
 };
 }
