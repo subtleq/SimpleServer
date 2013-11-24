@@ -61,87 +61,77 @@ public:
    *
    * @param data the data array to be sent
    * @param size the size of the data array to be sent
-   * @param millisecond_timeout timeout in milliseconds before we exit the function
    *
    * @return number of bytes actually sent on success, -1 on error
    */
-  int send_data(void* data, int size, int millisecond_timeout = 200);
+  int send_data(void* data, int size);
 
   /**
    * Use this socket object to send a short.  Note: will convert the short to
    * network order before sending.
    *
    * @param s the short to be sent
-   * @param millisecond_timeout timeout in milliseconds before we exit the function
    *
    * @return 0 on success, -1 on failure
    */
-  int send_short(short s, int millisecond_timeout = 200);
+  int send_short(short s);
 
   /**
    * Use this socket object to send a long.  Note: will convert the long to
    * network order before sending.
    *
    * @param l the long to be sent
-   * @param millisecond_timeout timeout in milliseconds before we exit the function
    *
    * @return 0 on success, -1 on failure
    */
-  int send_long(long l, int millisecond_timeout = 200);
+  int send_long(long l);
 
   /**
    * Use this socket object to receive a given array of bytes.
    * 
    * @param data the data array to receive into
    * @param size the maximum number of bytes to be read
-   * @param millisecond_timeout timeout in milliseconds before we exit the function
    *
    * @param return number of bytes actually received on success, -1 on error
    */
-  int recv_data(void* data, int size, int millisecond_timeout = 200);
+  int recv_data(void* data, int size);
 
   /**
    * Use this socket object to receive a short.  Note: will convert the short to
    * host order after receiving.
    *
    * @param *s place to store the received short
-   * @param millisecond_timeout timeout in milliseconds before we exit the function
    *
    * @return 0 on success, -1 on failure
    */
-  int recv_short(short *s, int millisecond_timeout = 200);
+  int recv_short(short *s);
 
   /**
    * Use this socket object to receive a long.  Note: will convert the long to
    * host order after receiving.
    *
    * @param *l place to store the received long
-   * @param millisecond_timeout timeout in milliseconds before we exit the function
    *
    * @return 0 on success, -1 on failure
    */
-  int recv_long(long *l, int millisecond_timeout = 200);
+  int recv_long(long *l);
 
   /**
    * Stop this socket object. If this is a server, no new connections will be
    * accepted.  If this is a client, the connection to the server is broken.
    *
-   * @param millisecond_timeout timeout in milliseconds before we exit the function
-   *
    * @return 0 on success, -1 on error
    */
-  int stop_socket(int millisecond_timeout = 200);
+  int stop_socket();
 
   /**
    * Restart this socket object.  If this is a server, it is reopened to accept
    * new connections.  If this is a client, the connection to the server is
    * reestablished.
    *
-   * @param millisecond_timeout timeout in milliseconds before we exit the function
-   *
    * @return 0 on success, -1 on error
    */
-  int restart_socket(int millisecond_timeout = 200);
+  int restart_socket();
 private:
   int socket_descriptor; // file descriptor for this socket object.
 };

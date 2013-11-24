@@ -12,7 +12,7 @@ using namespace simpleserver;
  */
 Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) :
     socket_descriptor(-1) {
-
+  
 }
 
 /**
@@ -27,11 +27,10 @@ Socket::~Socket() {
  *
  * @param data the data array to be sent
  * @param size the size of the data array to be sent
- * @param millisecond_timeout timeout in milliseconds before we exit the function
  *
  * @return number of bytes actually sent on success, -1 on error
  */
-int Socket::send_data(void* data, int size, int millisecond_timeout) {
+int Socket::send_data(void* data, int size) {
   // if this socket is not setup correctly or stopped, return error
   if (socket_descriptor == -1)
     return -1;
@@ -49,13 +48,12 @@ int Socket::send_data(void* data, int size, int millisecond_timeout) {
  * network order before sending.
  *
  * @param s the short to be sent
- * @param millisecond_timeout timeout in milliseconds before we exit the function
  *
  * @return 0 on success, -1 on failure
  */
-int Socket::send_short(short s, int millisecond_timeout) {
+int Socket::send_short(short s) {
   s = htons(s);
-  return send_data(&s, sizeof(short), millisecond_timeout);
+  return send_data(&s, sizeof(short));
 }
 
 /**
@@ -63,13 +61,12 @@ int Socket::send_short(short s, int millisecond_timeout) {
  * network order before sending.
  *
  * @param l the long to be sent
- * @param millisecond_timeout timeout in milliseconds before we exit the function
  *
  * @return 0 on success, -1 on failure
  */
-int Socket::send_long(long l, int millisecond_timeout) {
+int Socket::send_long(long l) {
   l = htonl(l);
-  return send_data(&l, sizeof(long), millisecond_timeout);
+  return send_data(&l, sizeof(long));
 }
 
 /**
@@ -77,11 +74,10 @@ int Socket::send_long(long l, int millisecond_timeout) {
  * 
  * @param data the data array to receive into
  * @param size the maximum number of bytes to be read
- * @param millisecond_timeout timeout in milliseconds before we exit the function
  *
  * @param return number of bytes actually received on success, -1 on error
  */
-int Socket::recv_data(void* data, int size, int millisecond_timeout) {
+int Socket::recv_data(void* data, int size) {
   // if this socket is not setup correctly or stopped, return error
   if (socket_descriptor == -1)
     return -1;
@@ -99,12 +95,11 @@ int Socket::recv_data(void* data, int size, int millisecond_timeout) {
  * host order after receiving.
  *
  * @param *s place to store the received short
- * @param millisecond_timeout timeout in milliseconds before we exit the function
  *
  * @return 0 on success, -1 on failure
  */
-int Socket::recv_short(short *s, int millisecond_timeout) {
-  int ans = recv_data(s, sizeof(short), millisecond_timeout);
+int Socket::recv_short(short *s) {
+  int ans = recv_data(s, sizeof(short));
   *s = ntohs(*s);
   return ans;
 }
@@ -114,12 +109,11 @@ int Socket::recv_short(short *s, int millisecond_timeout) {
  * host order after receiving.
  *
  * @param *l place to store the received long
- * @param millisecond_timeout timeout in milliseconds before we exit the function
  *
  * @return 0 on success, -1 on failure
  */
-int Socket::recv_long(long *l, int millisecond_timeout) {
-  int ans = recv_data(l, sizeof(long), millisecond_timeout);
+int Socket::recv_long(long *l) {
+  int ans = recv_data(l, sizeof(long));
   *l = ntohl(*l);
   return ans;
 }
@@ -128,11 +122,9 @@ int Socket::recv_long(long *l, int millisecond_timeout) {
  * Stop this socket object. If this is a server, no new connections will be
  * accepted.  If this is a client, the connection to the server is broken.
  *
- * @param millisecond_timeout timeout in milliseconds before we exit the function
- *
  * @return 0 on success, -1 on error
  */
-int Socket::stop_socket(int millisecond_timeout) {
+int Socket::stop_socket() {
   if (socket_descriptor == -1)
     return -1;
   close(socket_descriptor);
@@ -144,10 +136,8 @@ int Socket::stop_socket(int millisecond_timeout) {
  * new connections.  If this is a client, the connection to the server is
  * reestablished.
  *
- * @param millisecond_timeout timeout in milliseconds before we exit the function
- *
  * @return 0 on success, -1 on error
  */
-int Socket::restart_socket(int millisecond_timeout) {
+int Socket::restart_socket() {
   return 0;
 }
