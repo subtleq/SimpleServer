@@ -33,7 +33,7 @@ class Log {
      * @param type the type of Logging to turn on or off
      * @param value the value to set the type of logging to
      */
-    static void set_log_type(TYPE type, boolvalue) {
+    static void set_log_type(TYPE type, bool value) {
       Log::get_instance().bools[type] = value;
     }
 
@@ -49,7 +49,7 @@ class Log {
      */
     static void msg(TYPE type, const char *source, int line, const char *msg, ...) {
       // if we are not logging this type of message, return
-      if (!bools[type])
+      if (!Log::get_instance().bools[type])
         return;
 
       // create a va_list of the trailing variables and log the message
@@ -85,17 +85,17 @@ class Log {
 
       // create a combined date and time string in ISO 8601 format
       time_t rawtime = time(NULL);
-      strftime(log_string, LOG_STRING_SIZE, "%Y-%m-%dT%H:%M:%SZ", gmtime(&rawtime));
+      strftime(Log::get_instance().log_string, LOG_STRING_SIZE, "%Y-%m-%dT%H:%M:%SZ", gmtime(&rawtime));
 
       // record the passed in values for type of message, source file, and line number
-      sprintf(log_string + strlen(log_string), " [%s:%s:%s] ", type_string, source, line);
+      sprintf(Log::get_instance().log_string + strlen(Log::get_instance().log_string), " [%s:%s:%d] ", type_string, source, line);
 
       // record the passed in variables and append a newline
-      vsprintf(log_string + strlen(log_string), msg, args);
-      strcpy(log_string + strlen(log_string), "\n");
+      vsprintf(Log::get_instance().log_string + strlen(Log::get_instance().log_string), msg, args);
+      strcpy(Log::get_instance().log_string + strlen(Log::get_instance().log_string), "\n");
 
       // log the generated message and free the va_list
-      fprintf(stdout, "%s", log_string);
+      fprintf(stdout, "%s", Log::get_instance().log_string);
       va_end(args);
     }
 

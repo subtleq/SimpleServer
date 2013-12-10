@@ -3,9 +3,18 @@
 #include <string>
 using std::string;
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <unistd.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
 
 /**
  * A simple socket interface to allow easier access to socket communcation
@@ -32,7 +41,7 @@ enum PROTOCOL { TCP, UDP };
  * TODO possible future roles
  * CONNECTION - used for established connections on the server
  */
-enum ROLE { CLIENT, SERVER };
+enum ROLE { CLIENT, SERVER, CONNECTION };
 
 /**
  * A Socket object is used to simplify the use of sometype of socket object,
@@ -50,6 +59,8 @@ public:
    *   the address for the SERVER to connect to.
    */
   Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port);
+
+  Socket(PROTOCOL _protocol, ROLE _role, Socket* _server) {}
 
   /**
    * Socket destructor.  Calls stop_socket() and frees any internal resources.

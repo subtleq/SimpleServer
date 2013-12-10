@@ -12,7 +12,57 @@ using namespace simpleserver;
  */
 Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) :
     socket_descriptor(-1) {
+  struct addrinfo hints, *servinfo, *p;
+  int status;
   
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_UNSPEC; // don't care IPv4 or IPv6
+  hints.ai_socktype = SOCK_STREAM; // TODO based on PROTOCOL
+  hints.ai_flags = AI_PASSIVE; // fill in IP address for me
+  
+  // getaddrinfo
+  if ((status = getaddrinfo(_address.c_str(), _port.c_str(), &hints, &servinfo)) != 0) {
+    fprintf(stderr, "Socket getaddrinfo() Error: %s\n", gai_strerror(status));
+  }
+
+  // loop through all the results and bind tot he first we can
+  for (p = servinfo; p != NULL; p = p->ai_next) {
+    // socket
+    if ((socket_descriptor = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      perror("Socket socket() Error");
+      continue;
+    }
+/*
+    // setsockopt
+    int yes = 1;
+    if (setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+      perror("Socket setsockopt() Error");
+      continue;
+    }
+*/
+    // TODO if server, bind
+    if (_role == SERVER && bind(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
+      close(socket_descriptor);
+      perror("Socket bind() Error");
+      continue;
+    }
+
+    // TODO if TCP client, connect
+    if ((_protocol == TCP && _role == CLIENT) && connect(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
+      close(socket_descriptor);
+      perror("Socket connect() Error");
+      continue;
+    }
+
+    break;
+  }
+
+  if (p == NULL) {
+    fprintf(stderr, "General Socket Error\n");
+  }
+
+  // freeaddrinfo
+  freeaddrinfo(servinfo);
 }
 
 /**
@@ -35,7 +85,7 @@ int Socket::send_data(void* data, int size) {
   if (socket_descriptor == -1)
     return -1;
 
-  int ans = 0, cur = 0, send_cnt = 0;
+  int cur = 0, send_cnt = 0;
   // while we send some amount of data and we have not sent everything in the buffer
   do {
     cur = send(socket_descriptor, (void*) (((long long int) data) + send_cnt), size - send_cnt, 0);
@@ -82,7 +132,7 @@ int Socket::recv_data(void* data, int size) {
   if (socket_descriptor == -1)
     return -1;
 
-  int ans = 0, cur = 0, recv_cnt = 0;
+  int cur = 0, recv_cnt = 0;
   // while we receive some amount of data and we have not filled the buffer
   do {
     cur = recv(socket_descriptor, (void*) (((long long int) data) + recv_cnt), size - recv_cnt, 0);
