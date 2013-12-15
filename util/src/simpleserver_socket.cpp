@@ -3,6 +3,8 @@ using namespace simpleserver;
 
 #include <netinet/in.h>
 
+Socket::Socket() : socket_descriptor(-1) {}
+
 /**
  * Socket constructor.
  * @param _protocol the protocol type to be used by this socket
@@ -10,11 +12,12 @@ using namespace simpleserver;
  * @param _address the address for this socket to use.  Note: if a CLIENT,
  *   the address for the SERVER to connect to.
  */
-Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) :
-    socket_descriptor(-1) {
+int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _port) {
   struct addrinfo hints, *servinfo, *p;
   int status;
-  
+
+  LOG(DEBUG, "Creating Server With Address = '%s', Port = '%s'", _address.c_str(), _port.c_str());
+
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_UNSPEC; // don't care IPv4 or IPv6
   hints.ai_socktype = SOCK_STREAM; // TODO based on PROTOCOL
@@ -22,14 +25,16 @@ Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) :
   
   // getaddrinfo
   if ((status = getaddrinfo(_address.c_str(), _port.c_str(), &hints, &servinfo)) != 0) {
-    fprintf(stderr, "Socket getaddrinfo() Error: %s\n", gai_strerror(status));
+    LOG(ERROR, "Socket getaddrinfo() Error:");
+    fprintf(stderr, "%s\n", gai_strerror(status));
   }
 
   // loop through all the results and bind tot he first we can
   for (p = servinfo; p != NULL; p = p->ai_next) {
     // socket
     if ((socket_descriptor = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-      perror("Socket socket() Error");
+      LOG(ERROR, "Socket socket() Error:");
+      perror("");
       continue;
     }
 /*
@@ -43,14 +48,16 @@ Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) :
     // TODO if server, bind
     if (_role == SERVER && bind(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
       close(socket_descriptor);
-      perror("Socket bind() Error");
+      LOG(ERROR, "Socket bind() Error:");
+      perror("");
       continue;
     }
 
     // TODO if TCP client, connect
     if ((_protocol == TCP && _role == CLIENT) && connect(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
       close(socket_descriptor);
-      perror("Socket connect() Error");
+      LOG(ERROR, "Socket connect() Error:");
+      perror("");
       continue;
     }
 
@@ -58,11 +65,29 @@ Socket::Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port) :
   }
 
   if (p == NULL) {
-    fprintf(stderr, "General Socket Error\n");
+    LOG(ERROR, "General Socket Error");
   }
 
   // freeaddrinfo
   freeaddrinfo(servinfo);
+
+  LOG(DEBUG, "Created Socket Successfully With Address: '%s', Port: '%s', Descriptor: %d", _address.c_str(), _port.c_str(), socket_descriptor);
+  return 0;
+}
+
+int Socket::initialize(PROTOCOL _protocol, ROLE _role, Socket* _server) {
+  // if this is a TCP connection
+  if (_protocol == TCP && _role == CONNECTION) {
+    // if the server Socket is valid
+    if (_server->socket_descriptor != -1)
+      socket_descriptor = accept(_server->socket_descriptor, NULL, NULL);
+    else
+      LOG(ERROR, "Error Creating Server Connection: Invalid Server");
+    if (socket_descriptor == -1)
+      LOG(ERROR, "Error Creating Server Connection: Accept Call Failed");
+  } else
+    LOG(ERROR, "Error Creating Server Connection: not a TCP CONNECTION");
+    return 0;
 }
 
 /**

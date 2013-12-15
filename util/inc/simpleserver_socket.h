@@ -1,5 +1,7 @@
 #ifndef SIMPLESERVER_SOCKET_H
 #define SIMPLESERVER_SOCKET_H
+#include "simpleserver_log.h"
+
 #include <string>
 using std::string;
 
@@ -51,6 +53,8 @@ enum ROLE { CLIENT, SERVER, CONNECTION };
 class Socket
 {
 public:
+  Socket();
+
   /**
    * Socket constructor.
    * @param _protocol the protocol type to be used by this socket
@@ -58,9 +62,9 @@ public:
    * @param _address the address for this socket to use.  Note: if a CLIENT,
    *   the address for the SERVER to connect to.
    */
-  Socket(PROTOCOL _protocol, ROLE _role, string _address, string _port);
+  int initialize(PROTOCOL _protocol, ROLE _role, string _address, string _port);
 
-  Socket(PROTOCOL _protocol, ROLE _role, Socket* _server) {}
+  int initialize(PROTOCOL _protocol, ROLE _role, Socket* _server);
 
   /**
    * Socket destructor.  Calls stop_socket() and frees any internal resources.
