@@ -2,50 +2,137 @@
 #include "simpleserver_socket.h"
 using namespace simpleserver;
 
-#include <assert.h>
-#include <stdio.h>
+#include <pthread.h>
 
 /**
- * test program for the simplesocket interface
+ * class to mimic a server connection
  */
+class Server
+{
+public:
+  Server(string _address, string _port) : server(), connection(), address(_address), port(_port)
+  {
+    // start the thread helper
+    pthread_t thread;
+    pthread_create(&thread, NULL, &Server::pthread_helper, this);
+  }
+
+  int send(void* data, int size)
+  {
+    LOG(DEBUG, "sending data of size %d on server", size);
+    while(connection.send_data(data, size) != size)
+      sleep(1);
+    LOG(DEBUG, "server data sent");
+    return 0;
+  }
+
+private:
+  Socket server;
+  Socket connection;
+  string address;
+  string port;
+
+  static void* pthread_helper(void* v)
+  {
+    // start the server
+    while (((Server*) v)->server.initialize(((Server*) v)->address, ((Server*) v)->port, 1, true, true))
+      sleep(1);
+
+    // connect to the client
+    while (((Server*) v)->connection.accept_connection(&((Server*) v)->server))
+      sleep(1);
+
+    // start the receive loop
+    ((Server*) v)->recv_loop();
+    
+    return NULL;
+  }
+
+  void recv_loop()
+  {
+    int data = 0;
+    LOG(DEBUG, "Started server recv loop");
+    while(1)
+    {
+      // attempt to receive an int of data
+      if (connection.receive_data(&data, sizeof(data)) == sizeof(data))
+        LOG(DEBUG, "server received: %d", data);
+    }
+  }
+
+  void reconnect() {}
+};
+
+/**
+ * class to mimic a client connection
+ */
+class Client
+{
+public:
+  Client(string _address, string _port) : client(), address(_address), port(_port)
+  {
+    // start the thread helper
+    pthread_t thread;
+    pthread_create(&thread, NULL, &Client::pthread_helper, this);
+  }
+
+  int send(void* data, int size)
+  {
+    LOG(DEBUG, "sending data of size %d on client", size);
+    while(client.send_data(data, size) != size)
+      sleep(1);
+    LOG(DEBUG, "client data sent");
+    return 0;
+  }
+
+private:
+  Socket client;
+  string address;
+  string port;
+
+  static void* pthread_helper(void* v)
+  {
+    // start the client
+    while (((Client*) v)->client.initialize(((Client*) v)->address, ((Client*) v)->port, 1, true, false) != 0)
+      sleep(1);
+
+    // start the receive loop
+    ((Client*) v)->recv_loop();
+
+    return NULL;
+  }
+
+  void recv_loop()
+  {
+    int data = 0;
+    LOG(DEBUG, "Started server recv loop");
+    while(1)
+    {
+      // attempt to receive an int of data
+      if (client.receive_data(&data, sizeof(data)) == sizeof(data))
+        LOG(DEBUG"client received: %d", data);
+    }
+
+    LOG(DEBUG, "stopped client recv loop");
+  }
+
+  void reconnect() {}
+};
+
 int main()
 {
-  Socket *server, *client, *connection;
-  // create two socket objects
-  LOG(DEBUG, "Creating Server Instance");
-  server = new Socket();
-  while (server->initialize(TCP, SERVER, "localhost", "24600") != 0);
-  bool child = !fork();
-  // if the child
-  if (child) {
-    LOG(DEBUG, "Creating Client Instance");
-    client = new Socket();
-    while (client->initialize(TCP, CLIENT, "localhost", "24600") != 0);
-  } else {
-    LOG(DEBUG, "Creating Connection Instance");
-    connection = new Socket();
-    while (connection->initialize(TCP, CONNECTION, server) != 0);
-  }
+  LOG(DEBUG, "Testing Socket Library");
+  // test socket library implementation
+  LOG(DEBUG, "Creating TCP Server");
+  Server *server = new Server("localhost", "24601");
+  LOG(DEBUG, "Creating TCP Client");
+  Client *client = new Client("localhost", "24601");
+  sleep(5);
 
-  // TODO test sending various data types
-//  char sent_char = 42, recvd_char = 0;
-  short sent_short = 42, recvd_short = 0;
-//  int sent_int = 42, recvd_int = 0;
-
-  // send a message from the client to the server
-  LOG(DEBUG, "Testing send_short()");
-  if (child) {
-    client->send_short(sent_short);
-    client->recv_short(&recvd_short);
-    LOG(DEBUG, "Client Received Short: %d", recvd_short);
-  } else {
-    connection->recv_short(&recvd_short);
-    LOG(DEBUG, "Server Received Short: %d", recvd_short);
-    connection->send_short(sent_short);
-  }
-
-  // TODO test breaking and reestablishing the connection
+  int data = 42;
+  client->send(&data, sizeof(data));
+  server->send(&data, sizeof(data));
+  sleep(5);
 
   return 0;
 }
-
