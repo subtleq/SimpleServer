@@ -141,32 +141,6 @@ int Socket::send_data(void* data, int size) {
 }
 
 /**
- * Use this socket object to send a short.  Note: will convert the short to
- * network order before sending.
- *
- * @param s the short to be sent
- *
- * @return 0 on success, -1 on failure
- */
-int Socket::send_short(short s) {
-  s = htons(s);
-  return send_data(&s, sizeof(short));
-}
-
-/**
- * Use this socket object to send a long.  Note: will convert the long to
- * network order before sending.
- *
- * @param l the long to be sent
- *
- * @return 0 on success, -1 on failure
- */
-int Socket::send_long(long l) {
-  l = htonl(l);
-  return send_data(&l, sizeof(long));
-}
-
-/**
  * Use this socket object to receive a given array of bytes.
  * 
  * @param data the data array to receive into
@@ -185,34 +159,6 @@ int Socket::recv_data(void* data, int size) {
     cur = recv(socket_descriptor, (void*) (((long long int) data) + recv_cnt), size - recv_cnt, 0);
   } while (cur > 0 && ((recv_cnt += cur)  < size));
   return recv_cnt;
-}
-
-/**
- * Use this socket object to receive a short.  Note: will convert the short to
- * host order after receiving.
- *
- * @param *s place to store the received short
- *
- * @return 0 on success, -1 on failure
- */
-int Socket::recv_short(short *s) {
-  int ans = recv_data(s, sizeof(short));
-  *s = ntohs(*s);
-  return ans;
-}
-
-/**
- * Use this socket object to receive a long.  Note: will convert the long to
- * host order after receiving.
- *
- * @param *l place to store the received long
- *
- * @return 0 on success, -1 on failure
- */
-int Socket::recv_long(long *l) {
-  int ans = recv_data(l, sizeof(long));
-  *l = ntohl(*l);
-  return ans;
 }
 
 /**

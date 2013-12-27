@@ -61,6 +61,9 @@ public:
    * @param _role the fole of this socket
    * @param _address the address for this socket to use.  Note: if a CLIENT,
    *   the address for the SERVER to connect to.
+   * @param _server server socket connection to get connection from
+   *
+   * @return 
    */
   int initialize(PROTOCOL _protocol, ROLE _role, string _address, string _port);
   int initialize(PROTOCOL _protocol, ROLE _role, Socket* _server);
@@ -81,26 +84,6 @@ public:
   int send_data(void* data, int size);
 
   /**
-   * Use this socket object to send a short.  Note: will convert the short to
-   * network order before sending.
-   *
-   * @param s the short to be sent
-   *
-   * @return 0 on success, -1 on failure
-   */
-  int send_short(short s);
-
-  /**
-   * Use this socket object to send a long.  Note: will convert the long to
-   * network order before sending.
-   *
-   * @param l the long to be sent
-   *
-   * @return 0 on success, -1 on failure
-   */
-  int send_long(long l);
-
-  /**
    * Use this socket object to receive a given array of bytes.
    * 
    * @param data the data array to receive into
@@ -109,26 +92,6 @@ public:
    * @param return number of bytes actually received on success, -1 on error
    */
   int recv_data(void* data, int size);
-
-  /**
-   * Use this socket object to receive a short.  Note: will convert the short to
-   * host order after receiving.
-   *
-   * @param *s place to store the received short
-   *
-   * @return 0 on success, -1 on failure
-   */
-  int recv_short(short *s);
-
-  /**
-   * Use this socket object to receive a long.  Note: will convert the long to
-   * host order after receiving.
-   *
-   * @param *l place to store the received long
-   *
-   * @return 0 on success, -1 on failure
-   */
-  int recv_long(long *l);
 
   /**
    * Stop this socket object. If this is a server, no new connections will be
