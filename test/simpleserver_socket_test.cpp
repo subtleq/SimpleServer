@@ -131,12 +131,15 @@ int main()
   Client *client = new Client("localhost", "24601");
   sleep(5);
 
+  // test moving data from client to server and vice-versa
   int data = 42;
   client->send(&data, sizeof(data));
-//  client->recv(&client_data, sizeof(client_data));
+//  server->recv(&client_data, sizeof(client_data));
   server->send(&data, sizeof(data));
-//  server->recv(&server_data, sizeof(server_data));
+//  client->recv(&server_data, sizeof(server_data));
   sleep(5);
+
+  // TODO test breaking and reestablishing the client/server connection
 
   return 0;
 }
