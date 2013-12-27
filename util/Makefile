@@ -13,4 +13,4 @@ all: socket_test log_test;
 	g++ $(OPTIONS) $? -o $@
 
 clean:
-	rm -rf *.o socket_test
+	rm -rf *.o *_test

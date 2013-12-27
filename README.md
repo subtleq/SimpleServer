@@ -34,4 +34,4 @@ a simple name server to handle DNS lookup requests.
 
 -
 
-Additionally, several utility classes will be developed, including a logging interface and a socket wrapper.
+Additionally, several utility classes will be developed, including a logging interface, a config file reader, and a socket wrapper.
