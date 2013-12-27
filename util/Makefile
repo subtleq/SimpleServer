@@ -1,6 +1,6 @@
 # Makefile for the sim
 
-OPTIONS = -Wall -ggdb -Iinc -I.
+OPTIONS = -Wall -ggdb -Iinc -I. -lpthread
 
 OBJECTS = simpleserver_socket.o simpleserver_log.o
 

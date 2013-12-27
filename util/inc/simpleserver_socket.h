@@ -63,7 +63,6 @@ public:
    *   the address for the SERVER to connect to.
    */
   int initialize(PROTOCOL _protocol, ROLE _role, string _address, string _port);
-
   int initialize(PROTOCOL _protocol, ROLE _role, Socket* _server);
 
   /**
@@ -149,6 +148,10 @@ public:
   int restart_socket();
 private:
   int socket_descriptor; // file descriptor for this socket object.
+  PROTOCOL protocol;
+  ROLE role;
+  string address;
+  string port;
 };
 }
 #endif // #ifndef SIMPLESERVVER_SOCKET_H

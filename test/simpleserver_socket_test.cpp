@@ -34,17 +34,18 @@ private:
 
   static void* pthread_helper(void* v)
   {
+    Server *s = ((Server*) v);
     // start the server
-    while (((Server*) v)->server.initialize(((Server*) v)->address, ((Server*) v)->port, 1, true, true))
+    while ((s->server.initialize(TCP, SERVER, s->address, s->port)))
       sleep(1);
 
     // connect to the client
-    while (((Server*) v)->connection.accept_connection(&((Server*) v)->server))
+    while (s->connection.initialize(TCP, CONNECTION, &s->server))
       sleep(1);
 
     // start the receive loop
-    ((Server*) v)->recv_loop();
-    
+    s->recv_loop();
+
     return NULL;
   }
 
@@ -55,7 +56,7 @@ private:
     while(1)
     {
       // attempt to receive an int of data
-      if (connection.receive_data(&data, sizeof(data)) == sizeof(data))
+      if (connection.recv_data(&data, sizeof(data)) == sizeof(data))
         LOG(DEBUG, "server received: %d", data);
     }
   }
@@ -92,12 +93,13 @@ private:
 
   static void* pthread_helper(void* v)
   {
+    Client *c = (Client*) v;
     // start the client
-    while (((Client*) v)->client.initialize(((Client*) v)->address, ((Client*) v)->port, 1, true, false) != 0)
+    while (c->client.initialize(TCP, CLIENT, c->address, c->port) != 0)
       sleep(1);
 
     // start the receive loop
-    ((Client*) v)->recv_loop();
+    c->recv_loop();
 
     return NULL;
   }
@@ -109,8 +111,8 @@ private:
     while(1)
     {
       // attempt to receive an int of data
-      if (client.receive_data(&data, sizeof(data)) == sizeof(data))
-        LOG(DEBUG"client received: %d", data);
+      if (client.recv_data(&data, sizeof(data)) == sizeof(data))
+        LOG(DEBUG, "client received: %d", data);
     }
 
     LOG(DEBUG, "stopped client recv loop");

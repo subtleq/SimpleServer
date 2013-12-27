@@ -13,10 +13,16 @@ Socket::Socket() : socket_descriptor(-1) {}
  *   the address for the SERVER to connect to.
  */
 int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _port) {
+  protocol = _protocol;
+  role = _role;
+  address = _address;
+  port = _port;
+
   struct addrinfo hints, *servinfo, *p;
   int status;
 
-  LOG(DEBUG, "Creating Server With Address = '%s', Port = '%s'", _address.c_str(), _port.c_str());
+  LOG(DEBUG, "Creating %s With Address = '%s', Port = '%s'", 
+      role == SERVER ? "Server" : "Client", address.c_str(), port.c_str());
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_UNSPEC; // don't care IPv4 or IPv6
@@ -24,17 +30,17 @@ int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _
   hints.ai_flags = AI_PASSIVE; // fill in IP address for me
   
   // getaddrinfo
-  if ((status = getaddrinfo(_address.c_str(), _port.c_str(), &hints, &servinfo)) != 0) {
+  if ((status = getaddrinfo(address.c_str(), port.c_str(), &hints, &servinfo)) != 0) {
     LOG(ERROR, "Socket getaddrinfo() Error:");
     fprintf(stderr, "%s\n", gai_strerror(status));
+    return -1;
   }
 
-  // loop through all the results and bind tot he first we can
+  // loop through all the results and bind to the first we can
   for (p = servinfo; p != NULL; p = p->ai_next) {
     // socket
     if ((socket_descriptor = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-      LOG(ERROR, "Socket socket() Error:");
-      perror("");
+      LOG(ERROR, "socket() Error: %s", strerror(errno));
       continue;
     }
 /*
@@ -45,19 +51,24 @@ int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _
       continue;
     }
 */
-    // TODO if server, bind
-    if (_role == SERVER && bind(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
+    // if server, bind
+    if (role == SERVER && bind(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
       close(socket_descriptor);
-      LOG(ERROR, "Socket bind() Error:");
-      perror("");
+      LOG(ERROR, "bind() Error: %s", strerror(errno));
       continue;
     }
 
-    // TODO if TCP client, connect
-    if ((_protocol == TCP && _role == CLIENT) && connect(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
+    // if server, listen
+    if (role == SERVER && listen(socket_descriptor, 1) == -1) {
       close(socket_descriptor);
-      LOG(ERROR, "Socket connect() Error:");
-      perror("");
+      LOG(ERROR, "listen() Error: %s", strerror(errno));
+      continue;
+    }
+
+    // if TCP client, connect
+    if ((protocol == TCP && role == CLIENT) && connect(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
+      close(socket_descriptor);
+      LOG(ERROR, "connect() Error: %s", strerror(errno));
       continue;
     }
 
@@ -66,27 +77,38 @@ int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _
 
   if (p == NULL) {
     LOG(ERROR, "General Socket Error");
+    return -1;
   }
 
   // freeaddrinfo
   freeaddrinfo(servinfo);
 
-  LOG(DEBUG, "Created Socket Successfully With Address: '%s', Port: '%s', Descriptor: %d", _address.c_str(), _port.c_str(), socket_descriptor);
+  LOG(DEBUG, "Created Socket With Address: '%s', Port: '%s', Descriptor: %d",
+      _address.c_str(), _port.c_str(), socket_descriptor);
   return 0;
 }
 
 int Socket::initialize(PROTOCOL _protocol, ROLE _role, Socket* _server) {
+  protocol = _protocol;
+  role = _role;
+
   // if this is a TCP connection
-  if (_protocol == TCP && _role == CONNECTION) {
+  if (protocol == TCP && role == CONNECTION) {
     // if the server Socket is valid
     if (_server->socket_descriptor != -1)
       socket_descriptor = accept(_server->socket_descriptor, NULL, NULL);
-    else
+    else {
       LOG(ERROR, "Error Creating Server Connection: Invalid Server");
-    if (socket_descriptor == -1)
-      LOG(ERROR, "Error Creating Server Connection: Accept Call Failed");
-  } else
+      return -1;
+    }
+    if (socket_descriptor == -1) {
+      LOG(ERROR, "Error Creating Server Connection: Accept Call Failed: %s", strerror(errno));
+      return -1;
+    }
+  } else {
     LOG(ERROR, "Error Creating Server Connection: not a TCP CONNECTION");
+    return -1;
+  }
     return 0;
 }
 
