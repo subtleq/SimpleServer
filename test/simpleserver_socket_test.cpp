@@ -133,7 +133,9 @@ int main()
 
   int data = 42;
   client->send(&data, sizeof(data));
+//  client->recv(&client_data, sizeof(client_data));
   server->send(&data, sizeof(data));
+//  server->recv(&server_data, sizeof(server_data));
   sleep(5);
 
   return 0;
