@@ -1,7 +1,11 @@
 #include "simpleserver_socket.h"
 using namespace simpleserver;
 
-Socket::Socket() : socket_descriptor(-1) {}
+/**
+ * Constructor, puts the Socket into an uninitialized state
+ */
+Socket::Socket() : socket_descriptor(-1), protocol(DEFAULT_PROTOCOL),
+    role(DEFAULT_ROLE), address(""), port(""), server(NULL) {}
 
 /**
  * Socket constructor.
@@ -11,11 +15,19 @@ Socket::Socket() : socket_descriptor(-1) {}
  *   the address for the SERVER to connect to.
  */
 int Socket::init(PROTOCOL _protocol, ROLE _role, string _address, string _port) {
+  // if this Socket is already initialized and has not been closed
+  if (socket_descriptor != -1) {
+    LOG(ERROR, "Using Initialized Socket");
+    return -1;
+  }
+
+  // store the passed in parameters
   protocol = _protocol;
   role = _role;
   address = _address;
   port = _port;
 
+  // setup for getaddrinfo() call
   struct addrinfo hints, *servinfo, *p;
   int status;
 
@@ -24,7 +36,7 @@ int Socket::init(PROTOCOL _protocol, ROLE _role, string _address, string _port) 
 
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_UNSPEC; // don't care IPv4 or IPv6
-  hints.ai_socktype = SOCK_STREAM; // TODO based on PROTOCOL
+  hints.ai_socktype = protocol == TCP ? SOCK_STREAM : SOCK_DGRAM;
   hints.ai_flags = AI_PASSIVE; // fill in IP address for me
   
   // getaddrinfo
@@ -75,11 +87,12 @@ int Socket::init(PROTOCOL _protocol, ROLE _role, string _address, string _port) 
     break;
   }
 
-  if (p == NULL)
-    return -1;
-
   // freeaddrinfo
   freeaddrinfo(servinfo);
+
+  // if we couldn't use any of the addresses
+  if (p == NULL)
+    return -1;
 
   LOG(DEBUG, "Created Socket With Address: '%s', Port: '%s', Descriptor: %d",
       _address.c_str(), _port.c_str(), socket_descriptor);
@@ -87,6 +100,13 @@ int Socket::init(PROTOCOL _protocol, ROLE _role, string _address, string _port) 
 }
 
 int Socket::init(PROTOCOL _protocol, ROLE _role, Socket* _server) {
+  // if this socket is already initialized and not closed
+  if (socket_descriptor != -1) {
+    LOG(ERROR, "Using initialized Socket");
+    return -1;
+  }
+
+  // store passed in parameters
   protocol = _protocol;
   role = _role;
   server = _server;
@@ -101,16 +121,18 @@ int Socket::init(PROTOCOL _protocol, ROLE _role, Socket* _server) {
       LOG(ERROR, "Error Creating Server Connection: Invalid Server");
       return -1;
     }
+    
     if (socket_descriptor == -1) {
-      LOG(ERROR, "Error Creating Server Connection: Accept Call Failed: %s",
+      LOG(ERROR, "Error Creating Connection: Accept Call Failed: %s",
           strerror(errno));
       return -1;
     }
   } else {
-    LOG(ERROR, "Error Creating Server Connection: not a TCP CONNECTION");
+    LOG(ERROR, "Error Creating Connection: not a TCP CONNECTION");
     return -1;
   }
-    return 0;
+
+  return 0;
 }
 
 /**
@@ -130,8 +152,10 @@ Socket::~Socket() {
  */
 int Socket::send_data(void* data, int size) {
   // if this socket is not setup correctly or stopped, return error
-  if (socket_descriptor == -1)
+  if (socket_descriptor == -1) {
+    LOG(ERROR, "Cannot send on uninitialized Socket");
     return -1;
+  }
 
   int cur = 0, send_cnt = 0;
   // while we send some amount of data and we have not sent everything in the buffer
@@ -139,6 +163,7 @@ int Socket::send_data(void* data, int size) {
     cur = send(socket_descriptor, (void*) (((long long int) data) + send_cnt),
         size - send_cnt, 0);
   } while (cur > 0 && ((send_cnt += cur)  < size));
+
   return send_cnt;
 }
 
@@ -152,8 +177,10 @@ int Socket::send_data(void* data, int size) {
  */
 int Socket::recv_data(void* data, int size) {
   // if this socket is not setup correctly or stopped, return error
-  if (socket_descriptor == -1)
+  if (socket_descriptor == -1) {
+    LOG(ERROR, "Cannot recv on uninitialized Socket");
     return -1;
+  }
 
   int cur = 0, recv_cnt = 0;
   // while we receive some amount of data and we have not filled the buffer
@@ -161,6 +188,7 @@ int Socket::recv_data(void* data, int size) {
     cur = recv(socket_descriptor, (void*) (((long long int) data) + recv_cnt),
         size - recv_cnt, 0);
   } while (cur > 0 && ((recv_cnt += cur)  < size));
+  
   return recv_cnt;
 }
 
@@ -171,8 +199,11 @@ int Socket::recv_data(void* data, int size) {
  * @return 0 on success, -1 on error
  */
 int Socket::stop_socket() {
-  if (socket_descriptor == -1)
+  if (socket_descriptor == -1) {
+    LOG(ERROR, "Cannot stop uninitialized Socket");
     return -1;
+  }
+  
   close(socket_descriptor);
   return 0;
 }
@@ -187,8 +218,7 @@ int Socket::stop_socket() {
 int Socket::restart_socket() {
   stop_socket();
   if (role == CONNECTION)
-    init(protocol, role, server);
+    return init(protocol, role, server);
   else
-    init(protocol, role, address, port);
-  return 0;
+    return init(protocol, role, address, port);
 }

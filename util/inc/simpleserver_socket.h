@@ -1,3 +1,11 @@
+/*
+improvements:
+-enable UDP
+-verify all inputs are valid
+-look into appropriate socket options
+-look into enabling RAW sockets
+*/
+
 #ifndef SIMPLESERVER_SOCKET_H
 #define SIMPLESERVER_SOCKET_H
 
@@ -6,17 +14,8 @@
 #include <string>
 using std::string;
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
-#include <signal.h>
 #include <errno.h>
-#include <stdio.h>
 #include <netdb.h>
 
 #define SERVER_LISTEN_COUNT 100
@@ -35,18 +34,16 @@ namespace simpleserver
  * TODO possible future protocols
  * RAW - use a RAW socket
  */
-enum PROTOCOL { TCP, UDP };
+enum PROTOCOL { DEFAULT_PROTOCOL, TCP, UDP };
 
 /**
  * Role of a Socket object.
  * 
  * CLIENT - should run as a client, also used for server connection
  * SERVER - should run as a server
- * 
- * TODO possible future roles
  * CONNECTION - used for established connections on the server
  */
-enum ROLE { CLIENT, SERVER, CONNECTION };
+enum ROLE { DEFAULT_ROLE, CLIENT, SERVER, CONNECTION };
 
 /**
  * A Socket object is used to simplify the use of sometype of socket object,
