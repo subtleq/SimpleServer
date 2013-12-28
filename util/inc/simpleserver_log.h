@@ -3,11 +3,13 @@
 
 #define LOG(X,Y...) Log::msg(Log::X, __FILE__, __LINE__,Y)
 #define SET_LOG_TYPE(X,Y) Log::set_log_type(Log::X,Y)
+#define SET_LOG_FILE(X) Log::set_log_file(X)
 #define LOG_STRING_SIZE 1024
 #include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
 
 namespace simpleserver {
 /**
@@ -38,6 +40,18 @@ class Log {
     }
 
     /**
+     * set the file to store log messages into.
+     * 
+     * @param filename the new file to log messages to
+     */
+    static void set_log_file(const char* filename) {
+      // attempt to open the file supplied
+      FILE *f = fopen(filename, "w");
+      if (f != NULL)
+        Log::get_instance().file = f;
+    }
+
+    /**
      * Log various message types. Should be accessed via macro at beginning of
      * file.
      *
@@ -48,8 +62,10 @@ class Log {
      * @param ... any trailing variables for vsprintf to use
      */
     static void msg(TYPE type, const char *source, int line, const char *msg, ...) {
+      Log log = Log::get_instance();
+
       // if we are not logging this type of message, return
-      if (!Log::get_instance().bools[type])
+      if (!log.bools[type])
         return;
 
       // create a va_list of the trailing variables and log the message
@@ -85,30 +101,32 @@ class Log {
 
       // create a combined date and time string in ISO 8601 format
       time_t rawtime = time(NULL);
-      strftime(Log::get_instance().log_string, LOG_STRING_SIZE, "%Y-%m-%dT%H:%M:%SZ", gmtime(&rawtime));
+      strftime(log.log_string, LOG_STRING_SIZE, "%Y-%m-%dT%H:%M:%SZ", gmtime(&rawtime));
 
       // record the passed in values for type of message, source file, and line number
-      sprintf(Log::get_instance().log_string + strlen(Log::get_instance().log_string), " [%s:%s:%d] ", type_string, source, line);
+      sprintf(log.log_string + strlen(log.log_string), " [%s:%s:%d] ", type_string, source, line);
 
       // record the passed in variables and append a newline
-      vsprintf(Log::get_instance().log_string + strlen(Log::get_instance().log_string), msg, args);
-      strcpy(Log::get_instance().log_string + strlen(Log::get_instance().log_string), "\n");
+      vsprintf(log.log_string + strlen(log.log_string), msg, args);
+      strcpy(log.log_string + strlen(log.log_string), "\n");
 
       // log the generated message and free the va_list
-      fprintf(stdout, "%s", Log::get_instance().log_string);
+      fprintf(log.file, "%s", log.log_string);
       va_end(args);
     }
 
   private:
+    FILE *file; // file to write log messages to
     char log_string[LOG_STRING_SIZE]; // string used to generate log message.
     bool bools[TYPE_SIZE]; // Boolean array storing state of Log types.
 
     /**
-     * Constructor, set alllogging to on.
+     * Constructor, set default file to stdout, turn all logging on except debug.
      */
-    Log() {
+    Log() : file(stdout) {
       for (int i = 0; i < TYPE_SIZE; i++)
         bools[i] = true;
+      bools[DEBUG] = false;
     }
 
     /**

@@ -123,6 +123,7 @@ private:
 
 int main()
 {
+  SET_LOG_TYPE(DEBUG, true);
   LOG(DEBUG, "Testing Socket Library");
   // test socket library implementation
   LOG(DEBUG, "Creating TCP Server");

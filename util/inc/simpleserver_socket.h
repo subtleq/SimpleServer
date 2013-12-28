@@ -30,11 +30,9 @@ namespace simpleserver
  * 
  * TCP - use the TCP protocol
  * UDP - use the UDP protocol
- * 
- * TODO possible future protocols
  * RAW - use a RAW socket
  */
-enum PROTOCOL { DEFAULT_PROTOCOL, TCP, UDP };
+enum PROTOCOL { DEFAULT_PROTOCOL, TCP, UDP, RAW };
 
 /**
  * Role of a Socket object.
