@@ -1,22 +1,25 @@
 #ifndef SIMPLESERVER_SOCKET_H
 #define SIMPLESERVER_SOCKET_H
+
 #include "simpleserver_log.h"
 
 #include <string>
 using std::string;
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h>
+#include <sys/types.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <signal.h>
+#include <errno.h>
+#include <stdio.h>
+#include <netdb.h>
+
+#define SERVER_LISTEN_COUNT 100
 
 /**
  * A simple socket interface to allow easier access to socket communcation
@@ -65,8 +68,8 @@ public:
    *
    * @return 
    */
-  int initialize(PROTOCOL _protocol, ROLE _role, string _address, string _port);
-  int initialize(PROTOCOL _protocol, ROLE _role, Socket* _server);
+  int init(PROTOCOL _protocol, ROLE _role, string _address, string _port);
+  int init(PROTOCOL _protocol, ROLE _role, Socket* _server);
 
   /**
    * Socket destructor.  Calls stop_socket() and frees any internal resources.
@@ -115,6 +118,7 @@ private:
   ROLE role;
   string address;
   string port;
+  Socket *server;
 };
 }
 #endif // #ifndef SIMPLESERVVER_SOCKET_H

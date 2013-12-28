@@ -36,11 +36,11 @@ private:
   {
     Server *s = ((Server*) v);
     // start the server
-    while ((s->server.initialize(TCP, SERVER, s->address, s->port)))
+    while ((s->server.init(TCP, SERVER, s->address, s->port)))
       sleep(1);
 
     // connect to the client
-    while (s->connection.initialize(TCP, CONNECTION, &s->server))
+    while (s->connection.init(TCP, CONNECTION, &s->server))
       sleep(1);
 
     // start the receive loop
@@ -95,7 +95,7 @@ private:
   {
     Client *c = (Client*) v;
     // start the client
-    while (c->client.initialize(TCP, CLIENT, c->address, c->port) != 0)
+    while (c->client.init(TCP, CLIENT, c->address, c->port) != 0)
       sleep(1);
 
     // start the receive loop
@@ -140,6 +140,9 @@ int main()
   sleep(5);
 
   // TODO test breaking and reestablishing the client/server connection
+
+
+  // TODO test using incorrect parameters in init functions
 
   return 0;
 }

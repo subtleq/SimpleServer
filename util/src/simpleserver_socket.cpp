@@ -1,8 +1,6 @@
 #include "simpleserver_socket.h"
 using namespace simpleserver;
 
-#include <netinet/in.h>
-
 Socket::Socket() : socket_descriptor(-1) {}
 
 /**
@@ -12,7 +10,7 @@ Socket::Socket() : socket_descriptor(-1) {}
  * @param _address the address for this socket to use.  Note: if a CLIENT,
  *   the address for the SERVER to connect to.
  */
-int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _port) {
+int Socket::init(PROTOCOL _protocol, ROLE _role, string _address, string _port) {
   protocol = _protocol;
   role = _role;
   address = _address;
@@ -43,30 +41,32 @@ int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _
       LOG(ERROR, "socket() Error: %s", strerror(errno));
       continue;
     }
-/*
-    // setsockopt
+
+    // TODO setsockopt
     int yes = 1;
     if (setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
       perror("Socket setsockopt() Error");
       continue;
     }
-*/
+
     // if server, bind
-    if (role == SERVER && bind(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
+    if (role == SERVER &&
+        bind(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
       close(socket_descriptor);
       LOG(ERROR, "bind() Error: %s", strerror(errno));
       continue;
     }
 
     // if server, listen
-    if (role == SERVER && listen(socket_descriptor, 1) == -1) {
+    if (role == SERVER && listen(socket_descriptor, SERVER_LISTEN_COUNT) == -1) {
       close(socket_descriptor);
       LOG(ERROR, "listen() Error: %s", strerror(errno));
       continue;
     }
 
     // if TCP client, connect
-    if ((protocol == TCP && role == CLIENT) && connect(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
+    if ((protocol == TCP && role == CLIENT) &&
+        connect(socket_descriptor, p->ai_addr, p->ai_addrlen) == -1) {
       close(socket_descriptor);
       LOG(ERROR, "connect() Error: %s", strerror(errno));
       continue;
@@ -75,10 +75,8 @@ int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _
     break;
   }
 
-  if (p == NULL) {
-    LOG(ERROR, "General Socket Error");
+  if (p == NULL)
     return -1;
-  }
 
   // freeaddrinfo
   freeaddrinfo(servinfo);
@@ -88,21 +86,24 @@ int Socket::initialize(PROTOCOL _protocol, ROLE _role, string _address, string _
   return 0;
 }
 
-int Socket::initialize(PROTOCOL _protocol, ROLE _role, Socket* _server) {
+int Socket::init(PROTOCOL _protocol, ROLE _role, Socket* _server) {
   protocol = _protocol;
   role = _role;
+  server = _server;
 
   // if this is a TCP connection
   if (protocol == TCP && role == CONNECTION) {
-    // if the server Socket is valid
-    if (_server->socket_descriptor != -1)
+    // if the server has a valid socket and is a TCP SERVER
+    if (_server->socket_descriptor != -1 &&
+        _server->protocol == TCP && _server->role == SERVER)
       socket_descriptor = accept(_server->socket_descriptor, NULL, NULL);
     else {
       LOG(ERROR, "Error Creating Server Connection: Invalid Server");
       return -1;
     }
     if (socket_descriptor == -1) {
-      LOG(ERROR, "Error Creating Server Connection: Accept Call Failed: %s", strerror(errno));
+      LOG(ERROR, "Error Creating Server Connection: Accept Call Failed: %s",
+          strerror(errno));
       return -1;
     }
   } else {
@@ -135,7 +136,8 @@ int Socket::send_data(void* data, int size) {
   int cur = 0, send_cnt = 0;
   // while we send some amount of data and we have not sent everything in the buffer
   do {
-    cur = send(socket_descriptor, (void*) (((long long int) data) + send_cnt), size - send_cnt, 0);
+    cur = send(socket_descriptor, (void*) (((long long int) data) + send_cnt),
+        size - send_cnt, 0);
   } while (cur > 0 && ((send_cnt += cur)  < size));
   return send_cnt;
 }
@@ -156,7 +158,8 @@ int Socket::recv_data(void* data, int size) {
   int cur = 0, recv_cnt = 0;
   // while we receive some amount of data and we have not filled the buffer
   do {
-    cur = recv(socket_descriptor, (void*) (((long long int) data) + recv_cnt), size - recv_cnt, 0);
+    cur = recv(socket_descriptor, (void*) (((long long int) data) + recv_cnt),
+        size - recv_cnt, 0);
   } while (cur > 0 && ((recv_cnt += cur)  < size));
   return recv_cnt;
 }
@@ -182,5 +185,10 @@ int Socket::stop_socket() {
  * @return 0 on success, -1 on error
  */
 int Socket::restart_socket() {
+  stop_socket();
+  if (role == CONNECTION)
+    init(protocol, role, server);
+  else
+    init(protocol, role, address, port);
   return 0;
 }
